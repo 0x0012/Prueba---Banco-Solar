@@ -53,4 +53,83 @@ const updateUser = async data => {
   }
 }
 
-module.exports = { newUser, getUsers, updateUser }
+const deleteUser = async id => {
+  try {
+    const result = await pool.query(`DELETE FROM usuarios WHERE id = ${id}`)
+    return result
+  } catch (error) {
+    console.log('ERROR', { code: error.code, message: error.message})
+    return(error)
+  }
+}
+
+const transfer = async data => {
+  // Reconstruye data con ids del emisor y receptor
+  let goodData = []
+  try {
+    const emitter = await getUserId(data[0])
+    const receptor = await getUserId(data[1])
+    goodData = [emitter, receptor, data[2]]
+  } catch (error) {
+    console.log('ERROR', { code: error.code, message: error.message})
+    return(error)
+  }
+  
+  pool.query("BEGIN")
+  try {
+    // Intenta un ingreso de un nuevo registro en transferencias
+    const result = await pool.query({
+      text: "INSERT INTO transferencias (emisor, receptor, monto, fecha) VALUES ($1, $2, $3, NOW())",
+      values: goodData
+    })
+    
+    // Intenta actualizaz el balance del emisor
+    await pool.query({
+      text: "UPDATE usuarios SET balance = balance - $2 WHERE id = $1",
+      values: [goodData[0], goodData[2]]
+    }) 
+    
+    // Intenta actualizaz el balance del receptor
+    await pool.query({
+      text: "UPDATE usuarios SET balance = balance + $2 WHERE id = $1",
+      values: [goodData[1], goodData[2]]
+    })
+    
+    // Todo OK
+    await pool.query('COMMIT')
+    return result
+       
+  } catch (error) {
+    await pool.query("ROLLBACK")
+    console.log('ERROR', { code: error.code, message: error.message})
+    return(error)
+  }
+}
+
+const getTransfers = async () => {
+  try {
+    const { rows: result } = await pool.query({
+      text: `SELECT t.fecha AS fecha, e.nombre AS emisor, r.nombre AS receptor, t.monto AS monto
+              FROM transferencias as t
+              JOIN usuarios AS e ON t.emisor = e.id
+              JOIN usuarios AS r ON t.receptor = r.id`,
+      rowMode: 'array'
+    })
+    return result
+  } catch (error) {
+    console.log('ERROR', { code: error.code, message: error.message})
+    return(error)
+  }
+}
+
+const getUserId = async name => {
+  try {
+    const { rows: id } = await pool.query(`SELECT id FROM usuarios WHERE nombre = '${name}'`)
+    return id[0].id
+  } catch (error) {
+    console.log('ERROR', { code: error.code, message: error.message})
+    return(error)
+  }
+}
+
+module.exports = { newUser, getUsers, updateUser, deleteUser, transfer, getTransfers }

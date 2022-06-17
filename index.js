@@ -8,7 +8,7 @@
 const http = require('http')
 const url = require('url')
 const fs = require('fs')
-const { newUser, getUsers, updateUser } = require('./queries')
+const { newUser, getUsers, updateUser, deleteUser, transfer, getTransfers } = require('./queries')
 
 http
   .createServer(async (req, res) => {
@@ -45,6 +45,30 @@ http
         const respond = await updateUser(data)
         res.end(JSON.stringify(respond))
       })
+    }
+  
+    // Recibe el id de un usuario registrado y lo elimina
+    if (req.url.startsWith('/usuario?') && req.method == 'DELETE') {
+      const { id } = url.parse(req.url, true).query
+      const respond = await deleteUser(id)
+      res.end(JSON.stringify(respond)) 
+    }
+    
+    // Recibe los datos para realizar una nueva transferencia
+    if (req.url == '/transferencia' && req.method == 'POST') {
+      let body = ''
+      req.on('data', chunk => body += chunk)
+      req.on('end', async () => {
+        const data = Object.values(JSON.parse(body))
+        const respond = await transfer(data)
+        res.end(JSON.stringify(respond))
+      })
+    }
+  
+    // Devuelve todas las transacciones almacenadas en la DB
+    if (req.url == '/transferencias' && req.method == 'GET') {
+      const users = await getTransfers()
+      res.end(JSON.stringify(users))
     }
   })
   .listen(3000, console.log('$ Servidor Banco Solar', {status: 'online', port: 3000, url: 'http://localhost:3000'}))
