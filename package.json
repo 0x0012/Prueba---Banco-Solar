@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/0x0012/Prueba---Banco-Solar/issues"
   },
-  "homepage": "https://github.com/0x0012/Prueba---Banco-Solar#readme"
+  "homepage": "https://github.com/0x0012/Prueba---Banco-Solar#readme",
+  "dependencies": {
+    "pg": "^8.7.3"
+  }
 }
