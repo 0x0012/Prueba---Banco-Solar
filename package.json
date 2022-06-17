@@ -1,0 +1,20 @@
+{
+  "name": "bancosolar",
+  "version": "1.0.0",
+  "description": "Prueba - Banco Solar",
+  "module": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/0x0012/Prueba---Banco-Solar.git"
+  },
+  "author": "Max Coronado Lorca",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/0x0012/Prueba---Banco-Solar/issues"
+  },
+  "homepage": "https://github.com/0x0012/Prueba---Banco-Solar#readme"
+}
