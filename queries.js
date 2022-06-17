@@ -15,6 +15,7 @@ const pool = new Pool({
   database: 'bancosolar'
 })
 
+// Recibe los datos de un nuevo usuario y lo almacena en PostgreSQL
 const newUser = async data => {
   const query = {
     text: "INSERT INTO usuarios (nombre, balance) VALUES ($1, $2)",
@@ -29,6 +30,7 @@ const newUser = async data => {
   }
 }
 
+// Devuelve todos los usuarios registrados con sus balances
 const getUsers = async () => {
   try {
     const { rows: result } = await pool.query("SELECT * FROM usuarios")
@@ -39,6 +41,7 @@ const getUsers = async () => {
   }
 }
 
+// Recibe los datos modificados de un usuario registrado y los modifica
 const updateUser = async data => {
   const query = {
     text: "UPDATE usuarios SET nombre = $2, balance = $3 WHERE id = $1 RETURNING *",
@@ -53,6 +56,7 @@ const updateUser = async data => {
   }
 }
 
+// Recibe el id de un usuario registrado y lo elimina
 const deleteUser = async id => {
   try {
     const result = await pool.query(`DELETE FROM usuarios WHERE id = ${id}`)
@@ -63,6 +67,7 @@ const deleteUser = async id => {
   }
 }
 
+// Reibe los datos para realizar una nueva transferencia
 const transfer = async data => {
   // Reconstruye data con ids del emisor y receptor
   let goodData = []
@@ -77,7 +82,7 @@ const transfer = async data => {
   
   pool.query("BEGIN")
   try {
-    // Intenta un ingreso de un nuevo registro en transferencias
+    // Intenta el ingreso de un nuevo registro en transferencias
     const result = await pool.query({
       text: "INSERT INTO transferencias (emisor, receptor, monto, fecha) VALUES ($1, $2, $3, NOW())",
       values: goodData
@@ -106,6 +111,8 @@ const transfer = async data => {
   }
 }
 
+// Devuelve rodas las transferencias almacenadas en formato de arrelo
+// El arreglo devuelto es de la forma [fecha, nombre emisor, nombre receptor, monto]
 const getTransfers = async () => {
   try {
     const { rows: result } = await pool.query({
@@ -122,6 +129,7 @@ const getTransfers = async () => {
   }
 }
 
+// Devuelve la primera ocurrencia de id para un nombre dado
 const getUserId = async name => {
   try {
     const { rows: id } = await pool.query(`SELECT id FROM usuarios WHERE nombre = '${name}'`)
