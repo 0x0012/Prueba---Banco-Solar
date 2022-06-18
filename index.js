@@ -14,8 +14,15 @@ http
   .createServer(async (req, res) => {
     // Devuelve la aplicacion cliente
     if (req.url == '/' && req.method == 'GET') {
-      res.writeHead(200, { 'content-type': 'text/html' })
-      res.end(fs.readFileSync('index.html', 'utf8'))
+      fs.readFile('index.html', (err, data) => {
+        if (!err) {
+          res.writeHead(200, { 'content-type': 'text/html' })
+          res.end(data)
+        } else {
+          res.statusCode = 500
+          res.end()
+        }
+      })
     }
   
     // Recibe los datos de un nuevo usuario y lo almacena en PostgreSQL
@@ -24,15 +31,27 @@ http
       req.on('data', chunk => body += chunk)
       req.on('end', async () => {
         const data = Object.values(JSON.parse(body))
-        const respond = await newUser(data)
-        res.end(JSON.stringify(respond))
+        try {
+          const respond = await newUser(data)
+          res.statusCode = 201
+          res.end(JSON.stringify(respond))
+        } catch (error) {
+          res.statusCode = 500
+          res.end(JSON.stringify(error))
+        }
       })
     }
   
     // Devuelve todos los usuarios registrados con sus balances
     if (req.url == '/usuarios' && req.method == 'GET') {
-      const users = await getUsers()
-      res.end(JSON.stringify(users))
+      try {
+        const users = await getUsers()
+        res.writeHead(200, { 'content-type': 'application/json' })
+        res.end(JSON.stringify(users))
+      } catch (error) {
+        res.statusCode = 500
+        res.end(JSON.stringify(error))
+      }
     }
   
     // Recibe los datos modificados de un usuario registrado y los actualiza
@@ -42,16 +61,28 @@ http
       req.on('data', chunk => body += chunk)
       req.on('end', async () => {
         const data = [id, ...Object.values(JSON.parse(body))]
-        const respond = await updateUser(data)
-        res.end(JSON.stringify(respond))
+        try {
+          const respond = await updateUser(data)
+          res.writeHead(200, { 'content-type': 'application/json'})
+          res.end(JSON.stringify(respond))
+        } catch (error) {
+          res.statusCode = 500
+          res.end(JSON.stringify(error))
+        }
       })
     }
   
     // Recibe el id de un usuario registrado y lo elimina
     if (req.url.startsWith('/usuario?') && req.method == 'DELETE') {
       const { id } = url.parse(req.url, true).query
-      const respond = await deleteUser(id)
-      res.end(JSON.stringify(respond)) 
+      try {
+        const respond = await deleteUser(id)
+        res.writeHead(200, { 'content-type': 'application/json' })
+        res.end(JSON.stringify(respond)) 
+      } catch (error) {
+        res.statusCode = 500
+        res.end(JSON.stringify(error))
+      }
     }
     
     // Recibe los datos para realizar una nueva transferencia
@@ -60,15 +91,27 @@ http
       req.on('data', chunk => body += chunk)
       req.on('end', async () => {
         const data = Object.values(JSON.parse(body))
-        const respond = await transfer(data)
-        res.end(JSON.stringify(respond))
+        try {
+          const respond = await transfer(data)
+          res.writeHead(201, { 'content-type': 'application/json' })
+          res.end(JSON.stringify(respond))
+        } catch (error) {
+          res.statusCode = 500
+          res.end(JSON.stringify(error))
+        }
       })
     }
   
     // Devuelve todas las transacciones almacenadas en la DB
     if (req.url == '/transferencias' && req.method == 'GET') {
-      const users = await getTransfers()
-      res.end(JSON.stringify(users))
+      try {
+        const users = await getTransfers()
+        res.writeHead(200, { 'content-type': 'application/json' })
+        res.end(JSON.stringify(users))
+      } catch (error) {
+        res.statusCode = 500
+        res.end(JSON.stringify(error))
+      }
     }
   })
   .listen(3000, console.log('$ Servidor Banco Solar', {status: 'online', port: 3000, url: 'http://localhost:3000'}))

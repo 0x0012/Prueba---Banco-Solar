@@ -26,7 +26,7 @@ const newUser = async data => {
     return result
   } catch (error) {
     console.log('ERROR', { code: error.code, message: error.message})
-    return(error)
+    throw error
   }
 }
 
@@ -37,7 +37,7 @@ const getUsers = async () => {
     return result
   } catch (error) {
     console.log('ERROR', { code: error.code, message: error.message})
-    return(error)
+    throw error
   }
 }
 
@@ -52,7 +52,7 @@ const updateUser = async data => {
     return result
   } catch (error) {
     console.log('ERROR', { code: error.code, message: error.message})
-    return(error)
+    throw error
   }
 }
 
@@ -63,12 +63,17 @@ const deleteUser = async id => {
     return result
   } catch (error) {
     console.log('ERROR', { code: error.code, message: error.message})
-    return(error)
+    throw error
   }
 }
 
 // Reibe los datos para realizar una nueva transferencia
 const transfer = async data => {
+  // Valida si el emisor es el mismo que el receptor
+  if (data[0] === data[1]) {
+    console.log('ERROR', { code: 666, message: 'emitter is same that recepter'})
+    throw new Error('emisor = receptor')
+  }
   // Reconstruye data con ids del emisor y receptor
   let goodData = []
   try {
@@ -77,11 +82,13 @@ const transfer = async data => {
     goodData = [emitter, receptor, data[2]]
   } catch (error) {
     console.log('ERROR', { code: error.code, message: error.message})
-    return(error)
+    throw error
   }
   
-  pool.query("BEGIN")
   try {
+    // Inicializa la transaccion
+    await pool.query("BEGIN")
+    
     // Intenta el ingreso de un nuevo registro en transferencias
     const result = await pool.query({
       text: "INSERT INTO transferencias (emisor, receptor, monto, fecha) VALUES ($1, $2, $3, NOW())",
@@ -107,7 +114,7 @@ const transfer = async data => {
   } catch (error) {
     await pool.query("ROLLBACK")
     console.log('ERROR', { code: error.code, message: error.message})
-    return(error)
+    throw error
   }
 }
 
@@ -125,7 +132,7 @@ const getTransfers = async () => {
     return result
   } catch (error) {
     console.log('ERROR', { code: error.code, message: error.message})
-    return(error)
+    throw error
   }
 }
 
@@ -136,7 +143,7 @@ const getUserId = async name => {
     return id[0].id
   } catch (error) {
     console.log('ERROR', { code: error.code, message: error.message})
-    return(error)
+    throw error
   }
 }
 
